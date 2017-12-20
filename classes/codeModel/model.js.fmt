@@ -1,0 +1,277 @@
+Ext.onReady(function() {
+var addOrUpdate = 0;// 定义新增还是修改的标示
+
+	${extRenderer}
+	
+	${extCmbStore}
+	
+	Ext.define('${model}', {
+		extend : 'Ext.data.Model',
+		fields : [${extFields} ]
+	});
+
+	var ${secondCode}Store = Ext.create('Ext.data.Store', {
+		model : '${model}',
+		<#if isPage == 1>pageSize : pagelimit,</#if>
+		proxy : {
+			type : 'ajax',
+			url : basePath + '/${firstCode}/${secondCode}/search.do',
+			actionMethods : {
+				read : "POST"
+			},
+			reader : {
+				rootProperty : 'root'
+			}
+		},
+		autoLoad : false,
+		listeners : {
+			beforeload : function(store) {
+				Ext.apply(store.proxy.extraParams, {
+					${extBeforeload}
+				});
+			}
+		}
+	});
+
+	var sel${secondCodeUpper}Model = Ext.create('Ext.selection.CheckboxModel', {
+		mode : 'SINGLE'
+	});
+
+	var ${secondCode}Tb = Ext.create('Ext.toolbar.Toolbar', {
+		layout : {
+			overflowHandler : 'Menu'
+		},
+		items : [<#if isAdd == 1> {
+			text : '新增',
+			glyph : glyphAdd,
+			handler : add${secondCodeUpper}
+		}, </#if><#if isUpdate == 1>{
+			text : '修改',
+			glyph : glyphUpdate,
+			handler : update${secondCodeUpper}
+		}, </#if><#if isDelete == 1>{
+			text : '删除',
+			glyph : glyphDelete,
+			handler : del${secondCodeUpper}
+		}, </#if>'-', <#if isView == 1>{
+			text : '查看',
+			glyph : glyphView,
+			handler : view${secondCodeUpper}
+		},</#if>${extSearchFields} {
+			xtype : 'button',
+			glyph : glyphSearch,
+			text : '查询',
+			handler : function() {
+				search${secondCodeUpper}();
+			}
+		} ]
+	});
+
+	var ${secondCode}Grid = Ext.create('Ext.grid.Panel', {
+		title : '${description}列表',
+		frame : true,
+		glyph : glyphGrid,
+		width : '100%',
+		height : pageH,
+		collapsible : true,// 表头缩回按钮
+		store : ${secondCode}Store,
+		selModel : sel${secondCodeUpper}Model,
+		renderTo : Ext.getBody(),
+		columns : [ {
+			xtype : 'rownumberer',
+			width : 40
+		}${extColumns}],
+		viewConfig : {
+			stripeRows : true,
+			enableTextSelection : true
+		},
+		tbar : ${secondCode}Tb<#if isPage == 1>,
+		bbar : Ext.create('Ext.PagingToolbar', {
+			store : ${secondCode}Store,
+			displayInfo : true
+		})</#if>
+	});
+	<#if isAdd == 1|| isUpdate==1>
+	var ${secondCode}Form = new Ext.create("Ext.form.Panel", {
+		id : '${secondCode}Form',
+		frame : true,
+		border : true,
+		width : '100%',
+		height : ${formHeight},
+		bodyPadding : 4,
+		layout:'column',
+		buttonAlign : 'center',
+		defaultType : 'textfield',
+		waitTitle : '正在提交中',
+		fieldDefaults : {
+			labelAlign : 'right',
+			labelWidth : 120,
+			anchor : '100%',
+			margin : '0 0 5 0',
+			msgTarget : 'qtip',
+			columnWidth:${viewFormFieldWidth}
+		},
+		items : [ ${extFormFields}],
+		buttons : [ {
+			text : '保存',
+			glyph : glyphSave,
+			handler : save${secondCodeUpper}
+		}, {
+			text : '返回',
+			glyph : glyphBack,
+			handler : function() {
+				${secondCode}Win.hide();
+			}
+		} ]
+	});
+
+	var ${secondCode}Win = new Ext.Window({
+		width : ${windowWidth},
+		height : ${windowHeight},
+		glyph : glyphWindow,
+		title : '新增/修改',
+		modal : true,
+		closeAction : 'hide',
+		padding : 4,
+		items : [ ${secondCode}Form ]
+	});
+</#if>
+
+<#if isView == 1>
+	var ${secondCode}ViewForm = new Ext.create("Ext.form.Panel", {
+		id : '${secondCode}ViewForm',
+		width : '100%',
+		height : ${formHeight},
+		bodyPadding : 4,
+		layout:'column',
+		defaultType : 'displayfield',
+		buttonAlign : 'center',
+		fieldDefaults : {
+			labelAlign : 'right',
+			labelWidth : 120,
+			msgTarget : 'qtip',
+			anchor : '100%',
+			columnWidth:${viewFormFieldWidth}
+		},
+		items : [ ${extFormViewFields}],
+		buttons : [ {
+			text : '返回',
+			glyph : glyphBack,
+			handler : function() {
+				${secondCode}ViewWin.hide();
+			}
+		} ]
+	});
+	var ${secondCode}ViewWin = new Ext.Window({
+		width : ${windowWidth},
+		height : ${windowHeight},
+		glyph : glyphWindow,
+		title : '『查看${description}』',
+		modal : true,
+		closeAction : 'hide',
+		padding : 4,
+		items : [ ${secondCode}ViewForm ]
+	});
+	</#if>
+	
+	search${secondCodeUpper}();
+	// 查询
+	function search${secondCodeUpper}() {
+		${secondCode}Store.loadPage(1);
+	}
+	<#if isAdd == 1>
+	// 新增
+	function add${secondCodeUpper}() {
+		${secondCode}Form.getForm().reset();
+		${secondCode}Form.getForm().findField("${pkField}").setValue("");
+		${secondCode}Win.setTitle("『新增${description}』");
+		${secondCode}Win.show();
+		addOrUpdate=1;
+	}
+	</#if>
+	
+	<#if isUpdate == 1>
+	// 修改
+	function update${secondCodeUpper}() {
+		var record = ${secondCode}Grid.getSelectionModel().getLastSelected();
+		if (!record)
+			return;
+		${secondCode}Form.getForm().loadRecord(record);
+		${secondCode}Win.setTitle("『修改${description}』");
+		${secondCode}Win.show();
+		addOrUpdate=2;
+	}
+	</#if>
+	
+	<#if isAdd == 1 || isUpdate==1>
+	// 保存
+	function save${secondCodeUpper}() {
+		var url = "";
+		if (addOrUpdate==1)
+			url = basePath + '/${firstCode}/${secondCode}/add.do';
+		else if(addOrUpdate==2)
+			url = basePath + '/${firstCode}/${secondCode}/update.do';
+		if (${secondCode}Form.getForm().isValid()) {
+			${secondCode}Form.getForm().submit({
+				clientValidation : true,
+				url : url,
+				success : function(form, action) {
+					${secondCode}Win.hide();
+					${secondCode}Store.reload();
+				},
+				failure : function(form, action) {
+					Ext.Msg.alert('操作提示', action.result.msgText)
+				}
+			});
+		}
+	}
+	</#if>
+	
+	<#if isDelete == 1>
+	// 删除
+	function del${secondCodeUpper}() {
+	var record = ${secondCode}Grid.getSelectionModel().getLastSelected();
+				if (!record)
+					return;
+		Ext.Msg.confirm('确认删除', '你确定删除该条记录?', function(btn) {
+			if (btn == 'yes') {
+				showMask();
+				Ext.Ajax.request({
+					url : basePath + '/${firstCode}/${secondCode}/delete.do',
+					params : {
+						${pkField} : record.data.${pkField}
+					},
+					success : function(response) {
+						unMask();
+						var result = Ext.decode(response.responseText);
+						if (result.success) {
+							Ext.Msg.alert('操作提示', '删除成功', function() {
+								${secondCode}Store.reload();
+							});
+						} else {
+							Ext.Msg.alert('操作提示', result.msgText);
+						}
+					}
+				});
+			}
+		});
+	}
+</#if>
+
+<#if isView == 1>
+	// 查看
+	function view${secondCodeUpper}() {
+		var record = ${secondCode}Grid.getSelectionModel().getLastSelected();
+		if (!record)
+			return;
+		${secondCode}ViewForm.getForm().loadRecord(record);
+		${secondCode}ViewWin.show();
+	}
+</#if>
+
+	// 自适应大小
+	Ext.GlobalEvents.on('resize', function() {
+		${secondCode}Grid.getView().refresh();
+		${secondCode}Grid.setWidth('100%')
+	})
+});

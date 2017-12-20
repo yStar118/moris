@@ -1,0 +1,108 @@
+package ${javaPackage}.${firstCode}.dao;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.stereotype.Repository;
+
+import ${javaPackage}.${firstCode}.model.${model};
+import ${javaPackage}.${firstCode}.vo.${model}SearchVO;
+import ${javaPackage}.util.page.PageUtil;
+import ${javaPackage}.util.string.StringUtil;
+
+/**
+ * ${description}Dao
+ * @author gaoyf
+ *
+ */
+@Repository
+public class ${model}Dao {
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	/**
+	 * 查询总数
+	 */
+	public int listCount(${model}SearchVO ${modelLower}SearchVO) {
+		String sql = "select count(*) from ${tableName} where 1=1 ";
+		sql += createSearchSql(${modelLower}SearchVO);
+		NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+		SqlParameterSource paramSource = new BeanPropertySqlParameterSource(${modelLower}SearchVO);
+		return namedParameterJdbcTemplate.queryForObject(sql, paramSource, Integer.class);
+	}
+
+	/**
+	 * 分页查询
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public List<${model}> list(${model}SearchVO ${modelLower}SearchVO<#if isPage == 1>, int pageIndex, int pageSize</#if>) {
+		String sql = "select * from ${tableName} t where 1=1 ";
+		sql += createSearchSql(${modelLower}SearchVO);
+		sql += " order by ${pkField} asc";
+		<#if isPage == 1>sql = ${createPageType}(sql, pageIndex, pageSize);</#if>
+		NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+		SqlParameterSource paramSource = new BeanPropertySqlParameterSource(${modelLower}SearchVO);
+		List<${model}> list = namedParameterJdbcTemplate.query(sql, paramSource, new BeanPropertyRowMapper(${model}.class));
+		return list;
+	}
+
+	/**
+	 * 生成查询条件
+	 */
+	private String createSearchSql(${model}SearchVO ${modelLower}SearchVO) {
+		String sql = "";
+${searchFieldSql}
+		return sql;
+	}
+<#if isAdd == 1>
+	/**
+	 * 新增
+	 */
+	public int add(${model} ${modelLower}) {
+		NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+		String sql = "insert into ${tableName}(${insertFields}) values(${insertValue})";
+		SqlParameterSource paramSource = new BeanPropertySqlParameterSource(${modelLower});
+		return namedParameterJdbcTemplate.update(sql, paramSource);
+	}
+</#if>
+
+<#if isUpdate == 1>
+	/**
+	 * 修改
+	 */
+	public int update(${model} ${modelLower}) {
+		String sql = "update ${tableName} set ${updateFields} where ${pkField}=:${pkField}";
+		NamedParameterJdbcTemplate namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+		SqlParameterSource paramSource = new BeanPropertySqlParameterSource(${modelLower});
+		return namedParameterJdbcTemplate.update(sql, paramSource);
+	}
+</#if>
+<#if isDelete == 1>
+	/**
+	 * 删除
+	 * @return
+	 */
+	public int delete(${pkFieldType} ${pkField}) {
+		String sql = "delete from ${tableName} where ${pkField}=? ";
+		return jdbcTemplate.update(sql, ${pkField});
+	}
+</#if>
+	/**
+	 * 获取一条记录
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public ${model} get(${pkFieldType} ${pkField}) {
+		String sql = "select * from ${tableName} where ${pkField}=?";
+		Object[] params = new Object[] { ${pkField} };
+		List<${model}> list = jdbcTemplate.query(sql, params, new BeanPropertyRowMapper(${model}.class));
+		if (list.size() > 0)
+			return list.get(0);
+		else
+			return null;
+	}
+}

@@ -1,0 +1,13 @@
+package ${javaPackage}.${firstCode}.vo;
+
+/**
+ * ${description}查询条件
+ * @author gaoyf
+ *
+ */
+public class ${firstCodeUpper}${secondCodeUpper}SearchVO {
+	
+${fields}
+${setMethod}
+${getMethod}
+}

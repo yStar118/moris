@@ -1,0 +1,13 @@
+package ${javaPackage}.${firstCode}.model;
+
+/**
+ * ${description}model
+ * @author gaoyf
+ *
+ */
+public class ${firstCodeUpper}${secondCodeUpper} {
+
+${fields}
+${setMethod}
+${getMethod}
+}
